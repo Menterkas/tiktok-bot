@@ -24,13 +24,22 @@ def run_http_server():
 # Запускаем веб-сервер в отдельном потоке
 Thread(target=run_http_server, daemon=True).start()
 
+# 1. ОБРАБОТЧИК КОМАНД /start и /help (с косой чертой)
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-    bot.reply_to(message, "Привет! Пришли мне ссылку на TikTok, и я отправлю тебе видео без водяного знака. 🎬")
+    bot.reply_to(message, "Привет! Пришли мне ссылку на TikTok, и я отправлю тебе видео без водяного знака. 🎬 Если нужна помощь, сюда: @GravityCancellation")
 
+# 2. ОБРАБОТЧИК ОБЫЧНЫХ СООБЩЕНИЙ
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
     url = message.text.strip()
+    
+    # Проверяем, если пользователь написал просто приветствие или "старт" текстом
+    if url.lower() in ["старт", "start", "привет", "help", "помощь"]:
+        bot.reply_to(message, "Привет! Пришли мне ссылку на TikTok, и я отправлю тебе видео без водяного знака. 🎬")
+        return # Останавливаем выполнение функции, чтобы код ниже не выполнялся
+
+    # Если это ссылка на TikTok
     if "tiktok.com" in url:
         status = bot.reply_to(message, "⏳ Обрабатываю...")
         try:
@@ -42,11 +51,12 @@ def handle_message(message):
                 bot.send_video(message.chat.id, video_url)
             else:
                 bot.edit_message_text("❌ Ошибка: не удалось получить видео.", message.chat.id, status.message_id)
-        except:
+        except Exception as e:
             bot.edit_message_text("❌ Ошибка соединения с сервером API.", message.chat.id, status.message_id)
     else:
         bot.reply_to(message, "⚠️ Пожалуйста, отправьте ссылку на TikTok.")
 
+# ИСПРАВЛЕНО: Добавлены двойные подчеркивания __name__ и __main__
 if __name__ == '__main__':
     print("Бот успешно запущен!")
     bot.infinity_polling()
